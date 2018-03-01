@@ -53,6 +53,8 @@ struct Car {
     if (ride.earliest_start >= pickup_time) {
       wasted_time = ride.earliest_start - pickup_time;
       pickup_time = ride.earliest_start;
+    } else {
+      wasted_time = -ride.earliest_start + pickup_time;
     }
     if (pickup_time + distance < ride.latest_finish) {
       return wasted_time;
@@ -115,7 +117,7 @@ class FleetScheduler {
       for (Car& car : cars) {
         const int car_wasted_time = car.CanScheduleRide(ride);
         if (car_wasted_time != -2 &&
-            (!best_car || car_wasted_time < min_wasted_time)) {
+            (!best_car || (car_wasted_time < min_wasted_time))) {
           best_car = &car;
           min_wasted_time = car_wasted_time;
         }
@@ -126,10 +128,10 @@ class FleetScheduler {
         best_car->ScheduleRide(ride);
     }
     std::vector<Ride> new_missed_rides;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10000; i++) {
       std::sort(cars.begin(), cars.end(), NewCarSort);
       std::vector<Car*> new_cars;
-      for (int j = 0; j < std::min(8, number_of_cars); j++) {
+      for (int j = 0; j < std::min(1000, number_of_cars / 2); j++) {
         for (Ride& ride : cars[j].rides) missed_rides.push_back(ride);
         cars[j].cur_position.col = 0;
         cars[j].cur_position.row = 0;
