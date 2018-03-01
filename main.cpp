@@ -25,6 +25,9 @@ struct Ride {
   long long latest_finish;
 
   bool operator<(const Ride& rhs) const {
+    if (earliest_start == rhs.earliest_start) {
+      return Distance() > rhs.Distance();
+    }
     return earliest_start < rhs.earliest_start;
   }
 

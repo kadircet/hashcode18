@@ -1,5 +1,5 @@
 all:
-	g++ main.cpp -o m
+	g++ main.cpp -o m -g
 	./m < a_example.in > a.out
 	./m < b_should_be_easy.in > b.out
 	./m < c_no_hurry.in > c.out
