@@ -43,6 +43,20 @@ struct Car {
     return rhs.first_free_time < first_free_time;
   }
 
+  int CanScheduleRide(const Ride& ride) {
+    const int distance = ride.Distance();
+    int pickup_time = first_free_time + (cur_position - ride.start);
+    int wasted_time = -1;
+    if (ride.earliest_start > pickup_time) {
+      wasted_time = ride.earliest_start - pickup_time;
+      pickup_time = ride.earliest_start;
+    }
+    if (pickup_time + distance < ride.latest_finish) {
+      return wasted_time;
+    }
+    return -2;
+  }
+
   bool ScheduleRide(const Ride& ride) {
     const int distance = ride.Distance();
     int pickup_time = first_free_time + (cur_position - ride.start);
@@ -83,19 +97,23 @@ class FleetScheduler {
   void AssignRides() {
     std::vector<Ride> missed_rides;
     sort(rides.begin(), rides.end());
-    std::priority_queue<Car> car_queue;
-    for (Car& car : cars) {
-      car_queue.push(car);
-    }
     for (Ride& ride : rides) {
-      Car car = car_queue.top();
-      car_queue.pop();
-      if (!car.ScheduleRide(ride)) missed_rides.push_back(ride);
-      car_queue.push(car);
+      Car* best_car = nullptr;
+      int min_wasted_time = -1;
+      for (Car& car : cars) {
+        int car_wasted_time = car.CanScheduleRide(ride);
+        if (car_wasted_time != -2 &&
+            (!best_car || car_wasted_time < min_wasted_time)) {
+          best_car = &car;
+          min_wasted_time = car_wasted_time;
+        }
+      }
+      if (best_car == nullptr)
+        missed_rides.push_back(ride);
+      else
+        best_car->ScheduleRide(ride);
     }
-    while (!car_queue.empty()) {
-      Car car = car_queue.top();
-      car_queue.pop();
+    for (Car& car : cars) {
       car.Print();
     }
   }
