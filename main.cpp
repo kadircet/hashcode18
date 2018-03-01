@@ -11,6 +11,10 @@ struct Point {
     is >> p.row >> p.col;
     return is;
   }
+
+  int operator-(const Point& rhs) const {
+    return abs(rhs.row - row) + abs(rhs.col - col);
+  }
 };
 
 struct Ride {
@@ -39,14 +43,17 @@ struct Car {
     return rhs.first_free_time < first_free_time;
   }
 
-  void ScheduleRide(const Ride& ride) {
+  bool ScheduleRide(const Ride& ride) {
     const int distance = ride.Distance();
-    int pickup_time = ride.earliest_start;
-    if (first_free_time > pickup_time) pickup_time = first_free_time;
+    int pickup_time = first_free_time + (cur_position - ride.start);
+    if (ride.earliest_start > pickup_time) pickup_time = ride.earliest_start;
     if (pickup_time + distance < ride.latest_finish) {
       first_free_time = pickup_time + distance;
       rides.push_back(ride);
+      cur_position = ride.end;
+      return true;
     }
+    return false;
   }
 
   void Print() const {
@@ -74,6 +81,7 @@ class FleetScheduler {
   }
 
   void AssignRides() {
+    std::vector<Ride> missed_rides;
     sort(rides.begin(), rides.end());
     std::priority_queue<Car> car_queue;
     for (Car& car : cars) {
@@ -82,7 +90,7 @@ class FleetScheduler {
     for (Ride& ride : rides) {
       Car car = car_queue.top();
       car_queue.pop();
-      car.ScheduleRide(ride);
+      if (!car.ScheduleRide(ride)) missed_rides.push_back(ride);
       car_queue.push(car);
     }
     while (!car_queue.empty()) {
